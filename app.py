@@ -85,7 +85,7 @@ def page():
     # Retrieval settings
     st.subheader("Settings")
     st.session_state["retrieval_k"] = st.slider(
-        "Number of Retrieved Results (k)", min_value=1, max_value=10, value=5
+        "Number of Retrieved Results (k)", min_value=1, max_value=800, value=5
     )
     st.session_state["retrieval_threshold"] = st.slider(
         "Similarity Score Threshold", min_value=0.0, max_value=1.0, value=0.2, step=0.05
