@@ -7,8 +7,8 @@ Follow the steps below to set up and run the application:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/paquino11/chatpdf-rag-deepseek-r1.git
-cd chatpdf-rag-deepseek-r1
+git clone git@github.com:bowardwoward/RagPY.git
+cd RagPY
 ```
 
 ### 2. Create a Virtual Environment
