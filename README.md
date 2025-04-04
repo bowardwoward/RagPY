@@ -75,6 +75,14 @@ streamlit run app.py
 - Use the **Clear Chat** button to reset the chat interface.
 - Clearing the chat also resets the vector store and retriever.
 
+### 4.5. Running the csv data grabber
+Run the python script for creating a sanitized csv file:
+
+```bash
+python csv_data.py -d documents_sanitize --output results.csv
+
+```
+
 ---
 
 ## Project Structure

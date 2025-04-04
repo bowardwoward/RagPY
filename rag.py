@@ -74,7 +74,8 @@ class ChatPDF:
         self.prompt = ChatPromptTemplate.from_template(
             """
             Answer the user's question based on the following context information. For technical implementation questions, provide guidance using the approved tech stack: NestJS, ReactJS, React Native/Expo, and PostgreSQL.
-      
+            We are a tech startup, that is working with traditional financial institutions and launch them into the digital banking economy.
+            
             Context:
             {context}
             
