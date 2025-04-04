@@ -7,8 +7,11 @@ from typing import List, Tuple
 
 # LangChain imports
 from langchain_community.llms import Ollama
+from langchain_ollama import ChatOllama, OllamaEmbeddings
+from langchain.schema.runnable import RunnablePassthrough
+from langchain.schema.output_parser import StrOutputParser
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 
 
 def extract_metadata(file_path: Path, content: str) -> Tuple[str, str]:
@@ -28,13 +31,12 @@ def extract_metadata(file_path: Path, content: str) -> Tuple[str, str]:
 def create_digital_banking_chain():
     """Create a LangChain to analyze if content is related to digital banking."""
     # Initialize Ollama LLM
-    llm = Ollama(model="deepseek-r1:latest")
+    model = ChatOllama(model="gemma3:latest")
 
     # Create prompt template
-    prompt_template = PromptTemplate(
-        input_variables=["document_content"],
-        template="""
-        Your task is to determine if the following document is related to digital banking development (backend API implementation, frontend implementation, or server infrastructure).
+    prompt_template = ChatPromptTemplate.from_template(
+        """
+        Your task is to summarize the given the given document and determine if it's related to the development of digital banking systems (backend API implementation, frontend implementation, or server infrastructure).
 
         A digital banking platform refers to technology systems that enable banking services through digital channels, including:
         - Online banking websites and mobile applications for customers
@@ -60,8 +62,15 @@ def create_digital_banking_chain():
         """
     )
 
-    # Create chain
-    chain = LLMChain(llm=llm, prompt=prompt_template)
+    # Create chain - fix this part
+    chain = (
+        RunnablePassthrough()  # Passes the input as-is
+        | {"document_content": lambda x: x}  # Format input for template
+        | prompt_template      # Formats input for LLM
+        | model                # Queries the LLM
+        | StrOutputParser()    # Parses the LLM's output
+    )
+    
     return chain
 
 
@@ -78,14 +87,12 @@ def clean_response(text: str) -> str:
 
 def process_markdown_content(chain, content: str) -> Tuple[bool, str]:
     """Process markdown content to check if it's related to digital banking."""
-    # Use generate instead of run
-    response = chain.generate([{"document_content": content}])
+    # Use invoke method to get the response
+    response_text = chain.invoke(content)
     
-    # Access the processed text from the generation results
-    # The response structure is more complex with generate()
-    generation = response.generations[0][0]
-    response_text = generation.text
-    
+    # Clean the response if needed
+    response_text = clean_response(response_text)
+
     # Extract the yes/no answer and summary
     response_upper = response_text.strip().upper()
     if response_upper.startswith("YES"):
@@ -94,9 +101,9 @@ def process_markdown_content(chain, content: str) -> Tuple[bool, str]:
         is_related = False
     else:
         # Handle cases where response doesn't start with YES/NO
-        is_related = "YES" in response_upper[:20]  # Check first few characters
+        is_related = "YES" in response_upper[:4]  # Check first few characters
 
-    return is_related, clean_response(response_text)
+    return is_related, response_text
 
 
 def load_markdown_files(directory: str) -> List[Path]:
@@ -128,7 +135,7 @@ def process_markdown_files(directory: str, output_file: str):
     # Create CSV file and write header
     with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['ID', 'Title', 'Summary'])
+        csv_writer.writerow(['ID', 'Title', 'Relevant', 'Summary'])
 
         # Process each file
         for file_path in markdown_files:
@@ -146,7 +153,7 @@ def process_markdown_files(directory: str, output_file: str):
                 is_related, summary = process_markdown_content(chain, content)
 
                 # Add to CSV
-                csv_writer.writerow([doc_id, title, summary])
+                csv_writer.writerow([doc_id, title, is_related, summary])
                 print(f"Added to CSV: ID={doc_id}, Title={title}")
                 print(f"Related to digital banking: {is_related}")
                 print(f"Summary: {summary}")
